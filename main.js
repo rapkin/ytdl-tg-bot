@@ -2,7 +2,12 @@ const TelegramBot = require('node-telegram-bot-api')
 const execa = require('execa')
 const axios = require('axios')
 
-const token = '2096044601:AAF7qW_phkkOATd89T6GdOsHz093EskMxjs'
+const token = process.env.TG_TOKEN
+if (!token || token === 'undefined') {
+  console.error('Please define env var TG_TOKEN!')
+  process.exit()
+}
+
 const bot = new TelegramBot(token, { polling: true })
 
 const exec = async (file, args, timeout = 10000) => {
@@ -28,7 +33,7 @@ const exec = async (file, args, timeout = 10000) => {
 const getYtdlInfo = async (url) => {
   const {
     stdout
-  } = await exec('youtube-dl', ['-j', url], 5000)
+  } = await exec('youtube-dl', ['-j', url])
   const data = JSON.parse(stdout)
   return data
 }
