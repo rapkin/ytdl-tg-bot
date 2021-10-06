@@ -2,10 +2,15 @@
   "name": "ytdl-tg-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.22.0",
+    "execa": "^5.1.1",
+    "node-telegram-bot-api": "^0.54.0"
+  }
 }
