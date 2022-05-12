@@ -3,6 +3,8 @@ const execa = require('execa')
 const axios = require('axios')
 
 const token = process.env.TG_TOKEN
+const durationLimit = process.env.TIME_LIMIT || 600
+
 if (!token || token === 'undefined') {
   console.error('Please define env var TG_TOKEN!')
   process.exit()
@@ -43,11 +45,13 @@ const getVideoInfo = (info) => {
   const goodFormats = info.formats.filter(
     (f) => f.protocol === 'https' || f.protocol === 'http'
   )
-  const bestFormat = goodFormats[goodFormats.length - 1]
+  const filteredSize = goodFormats.filter(f => f.width < 2000) // don't send large videos
+  const bestFormat = (filteredSize.length > 0 ? filteredSize : goodFormats)[goodFormats.length - 1]
   if (!bestFormat) return undefined
 
   const title = info.title || ''
-  const url = bestFormat.url
+  const { width, height, url } = bestFormat
+  const duration = info.duration
   const headers = bestFormat.http_headers || {}
   if (!url) return undefined
 
@@ -55,6 +59,9 @@ const getVideoInfo = (info) => {
     title,
     url,
     headers,
+    width,
+    height,
+    duration
   }
 }
 
@@ -64,8 +71,13 @@ const tryToSendVideo = async (url, chatId) => {
     const {
       url: videoUrl,
       title,
+      width,
+      height,
+      duration,
       headers
-    } = await getVideoInfo(info)
+    } = getVideoInfo(info)
+    if (duration > durationLimit) return
+
     console.log('Found video', url, title, videoUrl)
 
     const {
@@ -77,7 +89,7 @@ const tryToSendVideo = async (url, chatId) => {
       headers: headers,
     })
 
-    bot.sendVideo(chatId, data)
+    bot.sendVideo(chatId, data, { duration, width, height })
   } catch (err) {
     console.warn('Failed to send video', url, err)
   }

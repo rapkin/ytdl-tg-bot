@@ -6,3 +6,4 @@ services:
     build: .
     environment:
       - TG_TOKEN=undefined
+      - TIME_LIMIT=60
