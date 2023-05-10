@@ -1,4 +1,4 @@
-FROM node:14.14-alpine
+FROM node:18-alpine
 
 RUN set -x \
  && apk add --no-cache \
@@ -6,19 +6,19 @@ RUN set -x \
         ffmpeg \
         gnupg \
         python3 \
+        py3-pip \
+        git \
+ && pip3 install --upgrade pip \
+ && pip3 install --no-cache-dir --upgrade setuptools \
+    # Clone youtube-dl repository
+ && git clone https://github.com/ytdl-org/youtube-dl.git /youtube-dl \
     # Install youtube-dl
-    # https://github.com/rg3/youtube-dl
- && curl -Lo /usr/local/bin/youtube-dl https://yt-dl.org/downloads/latest/youtube-dl \
- && curl -Lo youtube-dl.sig https://yt-dl.org/downloads/latest/youtube-dl.sig \
- && gpg --keyserver keyserver.ubuntu.com --recv-keys '7D33D762FD6C35130481347FDB4B54CBA4826A18' \
- && gpg --keyserver keyserver.ubuntu.com --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' \
- && gpg --verify youtube-dl.sig /usr/local/bin/youtube-dl \
- && chmod a+rx /usr/local/bin/youtube-dl \
-    # Requires python -> python3.
- && ln -s /usr/bin/python3 /usr/bin/python \
+ && cd /youtube-dl \
+ && python3 setup.py install \
     # Clean-up
- && rm youtube-dl.sig \
- && apk del curl gnupg \
+ && cd / \
+ && rm -rf /youtube-dl \
+ && apk del curl git \
     # Sets up cache.
  && mkdir /.cache \
  && chmod 777 /.cache
