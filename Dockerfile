@@ -1,5 +1,6 @@
 FROM node:18-alpine
 
+# Install system dependencies
 RUN set -x \
  && apk add --no-cache \
         curl \
@@ -7,20 +8,28 @@ RUN set -x \
         gnupg \
         python3 \
         py3-pip \
-        git \
- && pip3 install --upgrade pip \
- && pip3 install --no-cache-dir --upgrade setuptools \
-    # Clone yt-dlp repository
- && git clone https://github.com/yt-dlp/yt-dlp.git /yt-dlp \
-    # Install yt-dlp
+        git
+
+# Create and activate a Python virtual environment
+RUN python3 -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
+# Upgrade pip and install setuptools in the virtual environment
+RUN pip install --upgrade pip \
+ && pip install --no-cache-dir --upgrade setuptools
+
+# Clone yt-dlp repository and install it
+RUN git clone https://github.com/yt-dlp/yt-dlp.git /yt-dlp \
  && cd /yt-dlp \
- && python3 setup.py install \
-    # Clean-up
+ && python setup.py install \
  && cd / \
- && rm -rf /yt-dlp \
- && apk del curl git \
-    # Sets up cache.
- && mkdir /.cache \
+ && rm -rf /yt-dlp
+
+# Clean up unnecessary packages
+RUN apk del curl git
+
+# Sets up cache.
+RUN mkdir /.cache \
  && chmod 777 /.cache
 
 WORKDIR /app
