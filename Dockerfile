@@ -10,14 +10,14 @@ RUN set -x \
         git \
  && pip3 install --upgrade pip \
  && pip3 install --no-cache-dir --upgrade setuptools \
-    # Clone youtube-dl repository
- && git clone https://github.com/ytdl-org/youtube-dl.git /youtube-dl \
-    # Install youtube-dl
- && cd /youtube-dl \
+    # Clone yt-dlp repository
+ && git clone https://github.com/yt-dlp/yt-dlp.git /yt-dlp \
+    # Install yt-dlp
+ && cd /yt-dlp \
  && python3 setup.py install \
     # Clean-up
  && cd / \
- && rm -rf /youtube-dl \
+ && rm -rf /yt-dlp \
  && apk del curl git \
     # Sets up cache.
  && mkdir /.cache \

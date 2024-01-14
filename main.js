@@ -35,7 +35,7 @@ const exec = async (file, args, timeout = 10000) => {
 const getYtdlInfo = async (url) => {
   const {
     stdout
-  } = await exec('youtube-dl', ['-j', url])
+  } = await exec('yt-dlp', ['-j', url])
   const data = JSON.parse(stdout)
   return data
 }
