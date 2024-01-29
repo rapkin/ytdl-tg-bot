@@ -1,9 +1,13 @@
 const TelegramBot = require('node-telegram-bot-api')
 const execa = require('execa')
-const axios = require('axios')
+const fs = require('fs')
+const path = require('path')
+
+const tempDir = path.join(__dirname, 'tmp')
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir)
 
 const token = process.env.TG_TOKEN
-const durationLimit = process.env.TIME_LIMIT || 600
+const durationLimit = process.env.TIME_LIMIT || 600 // seconds
 
 if (!token || token === 'undefined') {
   console.error('Please define env var TG_TOKEN!')
@@ -32,66 +36,31 @@ const exec = async (file, args, timeout = 10000) => {
   }
 }
 
-const getYtdlInfo = async (url) => {
-  const {
-    stdout
-  } = await exec('yt-dlp', ['-j', url])
-  const data = JSON.parse(stdout)
-  return data
-}
+const downloadVideo = async (url) => {
+  const { stdout } = await exec('yt-dlp', ['-j', url])
+  const { duration } = JSON.parse(stdout)
+  if (duration > durationLimit) return
 
-const getVideoInfo = (info) => {
-  if (!info.formats || info.formats.length < 1) return null
-  const goodFormats = info.formats.filter(
-    (f) => f.protocol === 'https' || f.protocol === 'http'
-  )
-  const filteredSize = goodFormats.filter(f => f.width < 2000) // don't send large videos
-  const bestFormat = (filteredSize.length > 0 ? filteredSize : goodFormats)[goodFormats.length - 1]
-  if (!bestFormat) return undefined
-
-  const title = info.title || ''
-  const { width, height, url } = bestFormat
-  const duration = info.duration
-  const headers = bestFormat.http_headers || {}
-  if (!url) return undefined
-
-  return {
-    title,
-    url,
-    headers,
-    width,
-    height,
-    duration
-  }
+  const filePath = path.join(tempDir, Date.now().toString())
+  await exec('yt-dlp', ['-o', filePath, '--merge-output-format', 'mp4', url])
+  return { filePath: filePath  + '.mp4' }
 }
 
 const tryToSendVideo = async (url, chatId) => {
+  let createdFile = ''
   try {
-    const info = await getYtdlInfo(url)
-    const {
-      url: videoUrl,
-      title,
-      width,
-      height,
-      duration,
-      headers
-    } = getVideoInfo(info)
-    if (duration > durationLimit) return
+    const { filePath } = await downloadVideo(url)
+    createdFile = filePath
 
-    console.log('Found video', url, title, videoUrl)
-
-    const {
-      data
-    } = await axios({
-      url: videoUrl,
-      method: 'GET',
-      responseType: 'stream',
-      headers: headers,
-    })
-
-    bot.sendVideo(chatId, data, { duration, width, height })
+    await bot.sendVideo(chatId, filePath)
   } catch (err) {
-    console.warn('Failed to send video', url, err)
+    console.warn('Failed to download or send video', { url, createdFile }, err)
+  } finally {
+    try {
+      if (createdFile) fs.unlinkSync(createdFile)
+    } catch (err) {
+      console.error('Failed to delete file', createdFile, err)
+    }
   }
 }
 
