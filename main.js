@@ -16,7 +16,7 @@ if (!token || token === 'undefined') {
 
 const bot = new TelegramBot(token, { polling: true })
 
-const exec = async (file, args, timeout = 10000) => {
+const exec = async (file, args, timeout = 30000) => { // 30 seconds
   const subproccess = execa(file, args, {
     env: {
       PATH: process.env.PATH
@@ -41,9 +41,11 @@ const downloadVideo = async (url) => {
   const { duration } = JSON.parse(stdout)
   if (duration > durationLimit) return
 
-  const filePath = path.join(tempDir, Date.now().toString())
+  const filePath = path.join(tempDir, Date.now() + '.mp4' )
   await exec('yt-dlp', ['-o', filePath, '--merge-output-format', 'mp4', url])
-  return { filePath: filePath  + '.mp4' }
+  // To fix issue with yt-dlp naming
+  if (fs.existsSync(filePath + '.mp4')) fs.renameSync(filePath + '.mp4', filePath)
+  return { filePath }
 }
 
 const tryToSendVideo = async (url, chatId) => {
