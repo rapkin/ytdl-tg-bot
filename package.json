@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "execa": "^5.1.1",
-    "node-telegram-bot-api": "^0.54.0"
+    "node-telegram-bot-api": "^0.54.0",
+    "tree-kill": "^1.2.2"
   }
 }

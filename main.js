@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api')
 const execa = require('execa')
 const fs = require('fs')
 const path = require('path')
+const kill = require('tree-kill');
 
 const tempDir = path.join(__dirname, 'tmp')
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir)
@@ -24,18 +25,29 @@ const exec = async (file, args, timeout = 30000) => { // 30 seconds
     cwd: '/',
   })
 
-  setTimeout(() => {
+  const killProcess = () => {
     try {
-      process.kill(-subproccess.pid, 'SIGKILL')
-    } catch (_) {
-      subproccess.kill('SIGKILL')
+      kill(subprocess.pid, 'SIGKILL', (err) => {
+        if (err) {
+          console.error('Failed to kill process and its children', err);
+        } else {
+          console.log(`Successfully killed process ${subprocess.pid} and its children`);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to kill process', err)
     }
+  }
+
+  setTimeout(() => {
+    killProcess()
   }, timeout)
 
   try {
     return await subproccess
   } catch (err) {
     console.error(file + ' error', err)
+    killProcess()
     throw err
   }
 }
