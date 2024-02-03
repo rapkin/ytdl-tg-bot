@@ -1,8 +1,8 @@
 const TelegramBot = require('node-telegram-bot-api')
-const execa = require('execa')
 const fs = require('fs')
 const path = require('path')
-const kill = require('tree-kill');
+const execa = require('execa')
+const kill = require('tree-kill')
 
 const tempDir = path.join(__dirname, 'tmp')
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir)
@@ -58,9 +58,7 @@ const downloadVideo = async (url) => {
   if (duration > durationLimit) return
 
   const filePath = path.join(tempDir, Date.now() + '.mp4' )
-  await exec('yt-dlp', ['-o', filePath, '--recode-video', 'mp4', url])
-  // To fix issue with yt-dlp naming
-  if (fs.existsSync(filePath + '.mp4')) fs.renameSync(filePath + '.mp4', filePath)
+  await exec('sh', [path.join(__dirname, 'download.sh'), url, filePath])
   return { filePath }
 }
 
@@ -71,7 +69,7 @@ const tryToSendVideo = async (url, chatId) => {
     if (!res) return
     createdFile = res.filePath
 
-    await bot.sendVideo(chatId, filePath)
+    await bot.sendVideo(chatId, res.filePath)
   } catch (err) {
     console.warn('Failed to download or send video', { url, createdFile }, err)
   } finally {
