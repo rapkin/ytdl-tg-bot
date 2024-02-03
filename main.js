@@ -67,8 +67,9 @@ const downloadVideo = async (url) => {
 const tryToSendVideo = async (url, chatId) => {
   let createdFile = ''
   try {
-    const { filePath } = await downloadVideo(url)
-    createdFile = filePath
+    const res = await downloadVideo(url)
+    if (!res) return
+    createdFile = res.filePath
 
     await bot.sendVideo(chatId, filePath)
   } catch (err) {
