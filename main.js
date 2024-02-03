@@ -42,7 +42,7 @@ const downloadVideo = async (url) => {
   if (duration > durationLimit) return
 
   const filePath = path.join(tempDir, Date.now() + '.mp4' )
-  await exec('yt-dlp', ['-o', filePath, '--merge-output-format', 'mp4', url])
+  await exec('yt-dlp', ['-o', filePath, '--recode-video', 'mp4', url])
   // To fix issue with yt-dlp naming
   if (fs.existsSync(filePath + '.mp4')) fs.renameSync(filePath + '.mp4', filePath)
   return { filePath }
