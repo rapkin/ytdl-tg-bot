@@ -17,7 +17,8 @@ if (!token || token === 'undefined') {
 
 const bot = new TelegramBot(token, { polling: true })
 
-const exec = async (file, args, timeout = 30000) => { // 30 seconds
+const exec = async (file, args, timeout = 120000) => { // 2 minutes
+  console.log('RUN COMMAND:', file, args.join(' '))
   const subprocess = execa(file, args, {
     env: {
       PATH: process.env.PATH
@@ -58,7 +59,9 @@ const downloadVideo = async (url) => {
   if (duration > durationLimit) return
 
   const filePath = path.join(tempDir, Date.now() + '.mp4' )
-  await exec('sh', [path.join(__dirname, 'download.sh'), url, filePath])
+  await exec('yt-dlp', ['-o', filePath, '--recode-video', 'mp4', url])
+  // To fix issue with yt-dlp naming
+  if (fs.existsSync(filePath + '.mp4')) fs.renameSync(filePath + '.mp4', filePath)
   return { filePath }
 }
 
@@ -69,6 +72,7 @@ const tryToSendVideo = async (url, chatId) => {
     if (!res) return
     createdFile = res.filePath
 
+    console.log('SEND VIDEO:', res.filePath, url)
     await bot.sendVideo(chatId, res.filePath)
   } catch (err) {
     console.warn('Failed to download or send video', { url, createdFile }, err)
@@ -93,6 +97,7 @@ bot.on('message', async (msg) => {
     .filter((v, i, a) => a.indexOf(v) === i)
 
   for (const url of urls) {
+    console.log('HANDLE URL:', url)
     await tryToSendVideo(url, chatId)
   }
 })

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script works for some videos but it sometimes aspect ratio is wrong.
+# Also it takes too much time :(
+
 # Exit on error
 set -e
 
