@@ -18,7 +18,7 @@ if (!token || token === 'undefined') {
 const bot = new TelegramBot(token, { polling: true })
 
 const exec = async (file, args, timeout = 30000) => { // 30 seconds
-  const subproccess = execa(file, args, {
+  const subprocess = execa(file, args, {
     env: {
       PATH: process.env.PATH
     },
@@ -44,7 +44,7 @@ const exec = async (file, args, timeout = 30000) => { // 30 seconds
   }, timeout)
 
   try {
-    return await subproccess
+    return await subprocess
   } catch (err) {
     console.error(file + ' error', err)
     killProcess()
