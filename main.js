@@ -25,7 +25,11 @@ const exec = async (file, args, timeout = 30000) => { // 30 seconds
   })
 
   setTimeout(() => {
-    subproccess.kill('SIGKILL')
+    try {
+      process.kill(-subproccess.pid, 'SIGKILL')
+    } catch (_) {
+      subproccess.kill('SIGKILL')
+    }
   }, timeout)
 
   try {
