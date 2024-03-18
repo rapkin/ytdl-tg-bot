@@ -18,12 +18,7 @@ ENV PATH="/venv/bin:$PATH"
 RUN pip install --upgrade pip \
  && pip install --no-cache-dir --upgrade setuptools
 
-# Clone yt-dlp repository and install it
-RUN git clone https://github.com/yt-dlp/yt-dlp.git /yt-dlp \
- && cd /yt-dlp \
- && python setup.py install \
- && cd / \
- && rm -rf /yt-dlp
+RUN python -m pip install -U --pre yt-dlp
 
 # Clean up unnecessary packages
 RUN apk del curl git
