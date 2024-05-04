@@ -58,11 +58,28 @@ const downloadVideo = async (url) => {
   const { duration } = JSON.parse(stdout)
   if (duration > durationLimit) return
 
-  const filePath = path.join(tempDir, Date.now() + '.mp4' )
-  await exec('yt-dlp', ['-o', filePath, '--recode-video', 'mp4', url])
-  // To fix issue with yt-dlp naming
-  if (fs.existsSync(filePath + '.mp4')) fs.renameSync(filePath + '.mp4', filePath)
-  return { filePath }
+  const outFileName = Date.now().toString()
+  const outFile = path.join(tempDir, outFileName)
+  const fixedFile =  outFile + '_fix.mp4'
+  
+  await exec('yt-dlp', ['-o', outFile, url])
+  const downloadedFile = findFileByPrefix(tempDir, outFileName)
+
+  await exec('ffmpeg',[ '-i', downloadedFile, '-c:v', 'libx264', '-preset', 'fast', fixedFile])
+  fs.unlinkSync(downloadedFile)
+
+  return { filePath: fixedFile }
+}
+
+const findFileByPrefix = (dir, prefix) => {
+  try {
+      const files = fs.readdirSync(dir);
+      const matchedFile = files.find(file => file.startsWith(prefix));
+      return matchedFile ? path.join(dir, matchedFile) : null;
+  } catch (error) {
+      console.error('Error finding file by prefix:', error);
+      return null;
+  }
 }
 
 const tryToSendVideo = async (url, chatId) => {
@@ -73,7 +90,10 @@ const tryToSendVideo = async (url, chatId) => {
     createdFile = res.filePath
 
     console.log('SEND VIDEO:', res.filePath, url)
-    await bot.sendVideo(chatId, res.filePath)
+    const fStream = fs.createReadStream(res.filePath)
+    await bot.sendVideo(chatId, fStream, {}, {
+      contentType: 'video/mp4'
+    })
   } catch (err) {
     console.warn('Failed to download or send video', { url, createdFile }, err)
   } finally {
