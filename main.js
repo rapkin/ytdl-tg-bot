@@ -68,7 +68,11 @@ const downloadVideo = async (url) => {
   await exec('ffmpeg',[ '-i', downloadedFile, '-c:v', 'libx264', '-preset', 'fast', fixedFile])
   fs.unlinkSync(downloadedFile)
 
-  return { filePath: fixedFile }
+  const {stdout: outffprobe} = await exec('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=s=x:p=0', fixedFile])
+  const [width, height] = outffprobe.split('x').map(Number)
+  console.log('VIDEO DIMENSIONS:', width, height);
+
+  return { filePath: fixedFile, width, height }
 }
 
 const findFileByPrefix = (dir, prefix) => {
@@ -87,11 +91,15 @@ const tryToSendVideo = async (url, chatId) => {
   try {
     const res = await downloadVideo(url)
     if (!res) return
+    const { width, height } = res
     createdFile = res.filePath
 
     console.log('SEND VIDEO:', res.filePath, url)
     const fStream = fs.createReadStream(res.filePath)
-    await bot.sendVideo(chatId, fStream, {}, {
+    await bot.sendVideo(chatId, fStream, {
+      width,
+      height
+    }, {
       contentType: 'video/mp4'
     })
   } catch (err) {
